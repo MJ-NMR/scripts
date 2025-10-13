@@ -1,6 +1,6 @@
 #!/bin/bash
 
-folder=/home/zaater/Notes/
+folder=/home/zaater/doc/notes/
 dmenu_theme=/home/zaater/.config/rofi/dmenu.rasi
 TERMINAL=alacritty
 
