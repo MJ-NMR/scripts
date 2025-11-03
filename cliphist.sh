@@ -14,8 +14,8 @@ output() {
 write() {
 	[ -f "$histfile" ] || { notify-send "Creating $histfile"; echo -e "clear\n" > $histfile; }
 	[ -z "$clip" ] && exit 0
-	multiline=$(echo "$clip" | sed ':a;N;$!ba;s/\n/'"$placeholder"'/g')
-	grep -Fxq "$multiline" "$histfile" || echo "$multiline" >> "$histfile"
+	multiline=$(echo -n "$clip" | sed ':a;N;$!ba;s/\n/'"$placeholder"'/g')
+	grep -Fxq "$multiline" "$histfile" || echo  "$multiline" >> "$histfile"
 	notification=$(echo \"$multiline\") 
 }
 
@@ -27,7 +27,7 @@ sel() {
 	elif  [ -n "$selection" ]; then
 		if [ "$selection" = "clear" ]; then clear;
 		else
-			echo "$selection" | sed "s/$placeholder/\n/g" | xclip -i -selection clipboard && notification="Copied to clipboard!"
+			echo -n "$selection" | sed "s/$placeholder/\n/g" | xclip -i -selection clipboard && notification="Copied to clipboard!"
 		fi
 	fi
 }
