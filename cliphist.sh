@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 
 histfile="$HOME/.cache/cliphist"
 placeholder="<NEWLINE>"
@@ -12,36 +12,36 @@ output() {
 }
 
 write() {
-	[ -f "$histfile" ] || { notify-send "Creating $histfile"; echo -e "clear\n" > $histfile; }
-	[ -z "$clip" ] && exit 0
+	[[ -f $histfile ]] || { notify-send "Creating $histfile"; echo -e "clear\n" > $histfile; }
+	[[ -z $clip ]] && exit 0
+
 	multiline=$(echo -n "$clip" | sed ':a;N;$!ba;s/\n/'"$placeholder"'/g')
 	grep -Fxq "$multiline" "$histfile" || echo  "$multiline" >> "$histfile"
+
 	notification=$(echo \"$multiline\") 
 }
 
 sel() {
-	#selection=$(tac "$histfile" | dmenu -b -l 5 -i -p "Clipboard history:")
 	selection=$(tac "$histfile" | rofi -dmenu -theme /home/zaater/.config/rofi/dmenu.rasi -b -l 5 -i -p "Clipboard history ")
-	if [ "$selection" = "clear" ]; then 
-		clear && notification="Clipboard file cleared"
-	elif  [ -n "$selection" ]; then
-		if [ "$selection" = "clear" ]; then clear;
-		else
-			echo -n "$selection" | sed "s/$placeholder/\n/g" | xclip -i -selection clipboard && notification="Copied to clipboard!"
-		fi
+
+	if [[ $selection = "clear" ]]; then 
+		[[ -f $histfile ]] && rm $histfile 
+		notification="Clipboard file cleared"
+
+	elif  [[ -n $selection ]]; then
+		echo -n "$selection" | sed "s/$placeholder/\n/g" | xclip -i -selection clipboard && notification="Copied to clipboard!"
+	else exit 0
 	fi
 }
 
 clear() {
-	[ -f "$histfile" ] && rm $histfile 
 }
 
 case "$1" in
 	add) highlight && write ;;
 	out) output && write ;;
 	sel) sel ;; 
-	cl) clear ;;
-	*) 
+	*)
 		printf "%s\n\n" "$0 | File: $histfile"
 		printf "add - copy primary to clipboard and add to history\n"
 		printf "out - copy stdin to clipboard and add to history\n"
@@ -51,5 +51,5 @@ case "$1" in
 		;;
 esac
 
-[ -z "$notification" ] || notify-send -t 1000 -i copy-insync "$notification"
+[[ -z $notification ]] || notify-send -t 1000 -i copy-insync "$notification"
 
