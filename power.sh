@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export DISPLAY=:0
-export XAUTHORITY=/run/lightdm/zaater/xauthority
+#export DISPLAY=:0
+#export XAUTHORITY=/run/lightdm/zaater/xauthority
 
 
 choice=$(printf "Cancel\n  Shutdown\n󰑓  Reboot\n󰒲  Suspend\n  Lock\n󰗽  Logout" | rofi -dmenu -theme /home/zaater/.config/rofi/dmenu.rasi -theme-str 'window { width: 30%; }' -i -p "Power Menu")
