@@ -1,13 +1,36 @@
 #!/bin/bash
 
-while true; do
-  battery_level=$(acpi -b | grep -P -o '[0-9]+(?=%)')
-  status=$(acpi -b | grep -o 'Charging\|Discharging')
+switch_xset() {
+	if [[ $status == "Charging" ]]; then
+		xset s 0 0
+		xset -dpms
+		notify-send -i battery-good-charging "AC Power" "Chargering"
+		return
+	else
+		[[ "$battery_level" -le 10 ]] && notify-send -u critical -i battery-low "Battery Low" "Battery is at ${battery_level}%!"
+		xset s 1800 1800
+		xset +dpms
+		xset dpms 0 2700 2700
+		notify-send -i battery "AC Power" "Stop Charger"
+	fi
+}
 
-  if [[ "$status" == "Discharging" && "$battery_level" -le 10 ]]; then
-    notify-send -u critical -i battery-low "Battery Low" "Battery is at ${battery_level}%!" 
-	sleep 400
-  fi
-  sleep 60
+old=""
+while true; do
+	battery_level=$(acpi -b | grep -P -o '[0-9]+(?=%)')
+	status=$(acpi -b | grep -o 'Charging\|Discharging')
+
+	echo "status $status old $old"
+	if [[ "$status" != "$old" ]]; then
+		old=$status
+		switch_xset
+	fi
+
+	if [[ "$status" == "Discharging" && "$battery_level" -le 10 ]]; then
+		notify-send -u critical -i battery-low "Battery Low" "Battery is at ${battery_level}%!" 
+		#sleep 400
+	fi
+	charger=false
+	sleep 10
 done
 
