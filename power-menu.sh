@@ -9,7 +9,7 @@ choice=$(printf "Cancel\n  Shutdown\n󰑓  Reboot\n󰒲  Sleep\n  Lock\n�
 case "$choice" in
   *Shutdown) systemctl poweroff ;;
   *Reboot) systemctl reboot ;;
-  *Sleep) systemctl suspend ;;
+  *Sleep) systemctl suspend && i3lock ;;
   *Lock) i3lock ;;
   *Logout) i3-msg exit ;;
   *) exit 0 ;;
