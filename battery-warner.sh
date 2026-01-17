@@ -1,7 +1,7 @@
 #!/bin/bash
 
 sendNotify() {
-	if (( st == 0 )); then
+	if (( st == 1 )); then
 		notify-send -i battery-good-charging "AC Power" "Charging"
 		return
 	else
@@ -12,8 +12,8 @@ sendNotify() {
 
 oldst=0
 while true; do
-	blevel=$(acpi -b | grep -P -o '[0-9]+(?=%)')
-	st=$(systemd-ac-power ; echo $?)
+	blevel=$(cat /sys/class/power_supply/BAT0/capacity)
+	st=$(cat /sys/class/power_supply/ADP1/online)
 
 	if (( st != oldst )); then
 		echo "status $st old $oldst"
