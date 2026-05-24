@@ -4,11 +4,20 @@ histfile="$HOME/.cache/cliphist"
 placeholder="<NEWLINE>"
 
 highlight() {
-	clip=$(xclip -o -selection primary | xclip -i -f -selection clipboard)
+	if [ -n "$WAYLAND_DISPLAY" ]; then
+		clip=$(wl-paste --primary)
+		wl-copy "$clip"
+	else
+		clip=$(xclip -o -selection primary | xclip -i -f -selection clipboard)
+	fi
 }
 
 output() {
-	clip=$(xclip -i -f -selection clipboard)
+	if [ -n "$WAYLAND_DISPLAY" ]; then
+		clip=$(wl-paste)
+	else
+		clip=$(xclip -i -f -selection clipboard)
+	fi
 }
 
 write() {
@@ -29,12 +38,16 @@ sel() {
 		notification="Clipboard file cleared"
 
 	elif  [[ -n $selection ]]; then
-		echo -n "$selection" | sed "s/$placeholder/\n/g" | xclip -i -selection clipboard && notification="Copied to clipboard!"
+		echo -n "$selection" | sed "s/$placeholder/\n/g" > /tmp/_clip_tmp
+		if [[ -n $WAYLAND_DISPLAY ]]; then
+			wl-copy < /tmp/_clip_tmp
+		else
+			xclip -i -selection clipboard < /tmp/_clip_tmp
+		fi
+		rm /tmp/_clip_tmp
+		notification="Copied to clipboard!"
 	else exit 0
 	fi
-}
-
-clear() {
 }
 
 case "$1" in
@@ -45,8 +58,7 @@ case "$1" in
 		printf "%s\n\n" "$0 | File: $histfile"
 		printf "add - copy primary to clipboard and add to history\n"
 		printf "out - copy stdin to clipboard and add to history\n"
-		printf "sel - choose from history\n"
-		printf "cl  - clear history file\n"
+		printf "sel - choose from history/clear\n"
 		exit 0
 		;;
 esac
