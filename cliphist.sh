@@ -1,67 +1,41 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 
-histfile="$HOME/.cache/cliphist"
-placeholder="<NEWLINE>"
 
-highlight() {
+copy() {
 	if [ -n "$WAYLAND_DISPLAY" ]; then
-		clip=$(wl-paste --primary)
-		wl-copy "$clip"
+		selection="$(wl-paste --primary | sed -z 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+		wl-copy <<<$selection
 	else
-		clip=$(xclip -o -selection primary | xclip -i -f -selection clipboard)
+		selection=$(xclip -o -selection primary | sed -z 's/^[[:space:]]*//;s/[[:space:]]*$//' | xclip -i -f -selection clipboard)
 	fi
-}
-
-output() {
-	if [ -n "$WAYLAND_DISPLAY" ]; then
-		clip=$(wl-paste)
-	else
-		clip=$(xclip -i -f -selection clipboard)
-	fi
-}
-
-write() {
-	[[ -f $histfile ]] || { notify-send "Creating $histfile"; echo -e "clear\n" > $histfile; }
-	[[ -z $clip ]] && exit 0
-
-	multiline=$(echo -n "$clip" | sed ':a;N;$!ba;s/\n/'"$placeholder"'/g')
-	grep -Fxq "$multiline" "$histfile" || echo  "$multiline" >> "$histfile"
-
-	notification=$(echo \"$multiline\") 
+	cliphist store <<<$selection
+	notify-send -i copy "Copy:" "$selection"
 }
 
 sel() {
-	selection=$(tac "$histfile" | rofi -dmenu -theme /home/zaater/.config/rofi/dmenu.rasi -b -l 5 -i -p "Clipboard history ")
-
-	if [[ $selection = "clear" ]]; then 
-		[[ -f $histfile ]] && rm $histfile 
-		notification="Clipboard file cleared"
-
-	elif  [[ -n $selection ]]; then
-		echo -n "$selection" | sed "s/$placeholder/\n/g" > /tmp/_clip_tmp
-		if [[ -n $WAYLAND_DISPLAY ]]; then
-			wl-copy < /tmp/_clip_tmp
-		else
-			xclip -i -selection clipboard < /tmp/_clip_tmp
-		fi
-		rm /tmp/_clip_tmp
-		notification="Copied to clipboard!"
-	else exit 0
+	selection="$(cliphist list | rofi -dmenu)"
+	if [[ $selection == "clear" ]]; then
+		cliphist clear
+		notify-send -t 1000 -i delete "cliphist db cleared"
+		exit 0
 	fi
+	decoded="$(cliphist decode <<<$selection)"
+	if [ -n "$WAYLAND_DISPLAY" ]; then
+		wl-copy <<<$decoded
+	else
+		xclip -selection clipboard <<<$decoded
+	fi
+
+	[[ -z $notification ]] || notify-send -t 1000 -i copy "Copy:" "$decoded"
 }
 
 case "$1" in
-	add) highlight && write ;;
-	out) output && write ;;
+	copy) copy ;;
 	sel) sel ;; 
-	*)
+	*) sel;
 		printf "%s\n\n" "$0 | File: $histfile"
-		printf "add - copy primary to clipboard and add to history\n"
-		printf "out - copy stdin to clipboard and add to history\n"
+		printf "copy - copy selection to clipboard and add to history\n"
 		printf "sel - choose from history/clear\n"
 		exit 0
 		;;
 esac
-
-[[ -z $notification ]] || notify-send -t 1000 -i copy-insync "$notification"
-
