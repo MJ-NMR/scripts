@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 copy() {
 	if [ -n "$WAYLAND_DISPLAY" ]; then
 		selection="$(wl-paste --primary | sed -z 's/^[[:space:]]*//;s/[[:space:]]*$//')"
@@ -9,7 +8,7 @@ copy() {
 		selection=$(xclip -o -selection primary | sed -z 's/^[[:space:]]*//;s/[[:space:]]*$//' | xclip -i -f -selection clipboard)
 	fi
 	cliphist store <<<$selection
-	notify-send -i copy "Copy:" "$selection"
+	notify-send -i copy -- "Copy:" "$selection"
 }
 
 sel() {
@@ -25,17 +24,19 @@ sel() {
 	else
 		xclip -selection clipboard <<<$decoded
 	fi
-
-	[[ -z $notification ]] || notify-send -t 1000 -i copy "Copy:" "$decoded"
+	notify-send -i copy -- "Copy:" "$decoded"
 }
 
+--need
+
 case "$1" in
-	copy) copy ;;
-	sel) sel ;; 
-	*) sel;
-		printf "%s\n\n" "$0 | File: $histfile"
-		printf "copy - copy selection to clipboard and add to history\n"
-		printf "sel - choose from history/clear\n"
-		exit 0
-		;;
+copy) copy ;;
+sel) sel ;;
+*)
+	sel
+	printf "%s\n\n" "$0 | File: $histfile"
+	printf "copy - copy selection to clipboard and add to history\n"
+	printf "sel - choose from history/clear\n"
+	exit 0
+	;;
 esac
