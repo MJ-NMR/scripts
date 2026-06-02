@@ -1,29 +1,17 @@
 #!/bin/bash
 
-sendNotify() {
-	if (( st == 1 )); then
-		notify-send -i battery-good-charging "AC Power" "Charging"
-		return
-	else
-		notify-send -i battery "AC Power" "Stop Charging"
+BATTERY=$(cat /sys/class/power_supply/BAT0/capacity)
+STATUS=$(cat /sys/class/power_supply/ADP1/online)
+
+SOUND_WARN="/usr/share/sounds/alsa/low-batrery-warn.mp3"
+SOUND_CRITICAL="/usr/share/sounds/alsa/low-battery-critical.mp3"
+
+if (("$STATUS" != "1")); then
+	if ((BATTERY < 5)); then
+		notify-send -i battery-low -u critical "Critical Battery" "${BATTERY}% — plug in NOW!"
+		paplay "$SOUND_CRITICAL"
+	elif ((BATTERY < 15)); then
+		notify-send -i battery-low -t 2000 -u normal "Low Battery" "${BATTERY}% remaining"
+		paplay "$SOUND_WARN"
 	fi
-}
-
-oldst=0
-while true; do
-	blevel=$(cat /sys/class/power_supply/BAT0/capacity)
-	st=$(cat /sys/class/power_supply/ADP1/online)
-
-	if (( st != oldst )); then
-		echo "status $st old $oldst"
-		oldst=$st
-		sendNotify
-	fi
-
-	if ((blevel < 15 && st == 0)); then
-		notify-send -u critical -i battery-low -t 4000 "Battery Low" "Battery is at ${blevel}%!"
-		sleep 60
-	fi
-	sleep 10
-done
-
+fi
